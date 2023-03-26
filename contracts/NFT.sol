@@ -27,7 +27,7 @@ interface IERC165 {
     function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-contract NFT is IERC721, IERC721Metadata {
+contract NFT is IERC721, IERC721Metadata, IERC165 {
     mapping (uint256=>address) private owners;
     mapping (address=>uint256) private balances;
     mapping (uint256=>address) private tokenApprovals;
@@ -73,31 +73,49 @@ contract NFT is IERC721, IERC721Metadata {
         return _tokenURI[_tokenId];
     }
 
-    function getApproved(uint256 _tokenId) external view returns (address){
+    function getApproved(uint256 _tokenId) public view returns (address){
         return tokenApprovals[_tokenId];
     }
 
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory data) external payable{
-
+    function supportsInterface(bytes4 interfaceID) external pure returns(bool){
+        return (
+            interfaceID == this.balanceOf.selector
+                            ^ this.ownerOf.selector
+                            ^ bytes4(keccak256("safeTransferFrom(address,address,uint256,bytes)"))
+                            ^ bytes4(keccak256("safeTransferFrom(address,address,uint256)"))
+                            ^ this.transferFrom.selector
+                            ^ this.approve.selector
+                            ^ this.setApprovalForAll.selector
+                            ^ this.getApproved.selector
+                            ^ this.isApprovedForAll.selector
+        );
     }
 
     function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable{
+        safeTransferFrom(_from, _to, _tokenId, "");
+    }
 
+    function _isApprovalOrOwner(address _sender, uint256 _tokenId) internal view returns(bool){
+        address owner = _ownerOf(_tokenId);
+        return _sender == owner || getApproved(_tokenId) == _sender ||isApprovedForAll(owner, _sender);
+    }
+
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory data) public payable{
+        require(_isApprovalOrOwner(msg.sender, _tokenId), "ERC721: Invalid Caller");
+        require(_to != address(0), "ERC721: transfer to invalid Account" );
+
+        _transfer(_from, _to, _tokenId);
     }
 
     function transferFrom(address _from, address _to, uint256 _tokenId) external payable{
-        address owner = _ownerOf(_tokenId);
-        require(msg.sender == owner, "ERC721: Invalid Caller");
+        require(_isApprovalOrOwner(msg.sender, _tokenId), "ERC721: Invalid Caller");
+        require(_to != address(0), "ERC721: transfer to invalid Account" );
         _transfer(_from, _to, _tokenId);
     }
 
     function approve(address _approved, uint256 _tokenId) external payable{
         address owner = _ownerOf(_tokenId);
-        require(
-            msg.sender == owner
-            || msg.sender == tokenApprovals[_tokenId] 
-            || isApprovedForAll(owner, msg.sender)
-        , "ERC721: Invalid Caller");
+        require(_isApprovalOrOwner(msg.sender, _tokenId), "ERC721: Invalid Caller");
 
         tokenApprovals[_tokenId] = _approved;
         emit Approval(owner, _approved, _tokenId);
