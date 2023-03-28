@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+pragma solidity ^0.8.0;
+
+import "./IERC165.sol";
 
 interface IERC721 {
     event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
@@ -21,10 +23,6 @@ interface IERC721Metadata {
     function name() external view returns (string memory _name);
     function symbol() external view returns (string memory _symbol);
     function tokenURI(uint256 _tokenId) external view returns (string memory _tokenURI);
-}
-
-interface IERC165 {
-    function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
 contract NFT is IERC721, IERC721Metadata, IERC165 {
