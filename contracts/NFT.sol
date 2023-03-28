@@ -31,7 +31,7 @@ contract NFT is IERC721, IERC721Metadata, IERC165 {
     mapping (uint256=>address) private tokenApprovals;
     mapping (address=> mapping(address=>bool)) private operatorApprovals;
 
-    mapping (uint256=>string) private _tokenURI;
+    mapping (uint256=>string) public tokenURI;
 
     string public _name;
     string public _symbol; 
@@ -65,10 +65,6 @@ contract NFT is IERC721, IERC721Metadata, IERC165 {
 
     function symbol() external view returns (string memory){
         return _symbol;
-    }
-
-    function tokenURI(uint256 _tokenId) external view returns (string memory){
-        return _tokenURI[_tokenId];
     }
 
     function getApproved(uint256 _tokenId) public view returns (address){
@@ -119,6 +115,14 @@ contract NFT is IERC721, IERC721Metadata, IERC165 {
         emit Approval(owner, _approved, _tokenId);
     }
 
+    function mint(address _to, uint256 _tokenId) external {
+        require(owners[_tokenId] == address(0));
+        owners[_tokenId] = _to;
+        balances[_to] += 1;
+
+        emit Transfer(msg.sender, _to, _tokenId);
+    }
+
     function setApprovalForAll(address _operator, bool _approved) external{
         operatorApprovals[msg.sender][_operator] = _approved;
         emit ApprovalForAll(msg.sender, _operator, _approved);
@@ -134,4 +138,9 @@ contract NFT is IERC721, IERC721Metadata, IERC165 {
 
         emit Transfer(_from, _to, _tokenId);
     }
+
+    function _setTokenURI(uint256 _tokenId, string memory _tokenURI) internal {
+        tokenURI[_tokenId] = _tokenURI;
+    }
+
 }
