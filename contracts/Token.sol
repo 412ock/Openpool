@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IERC165.sol";
+import "./library/Ownership.sol";
 
 interface IERC20 {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -16,19 +17,6 @@ interface IERC20 {
     function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
     function approve(address _spender, uint256 _value) external returns (bool success);
     function allowance(address _owner, address _spender) external view returns (uint256 remaining);
-}
-
-contract Ownership {
-    address owner;
-
-    constructor (address _owner){
-        owner = _owner;
-    }
-
-    modifier onlyOwner(address _caller){
-        require(owner == _caller, "Not Owner");
-        _;
-    }
 }
 
 contract Token is IERC20, IERC165, Ownership {
